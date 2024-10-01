@@ -136,8 +136,31 @@ const genAccessToken=async(req,res)=>{
   }
 }
 
-const logout=async(req,res)=>{
-  
-}
+const logout = async (req, res) => {
+  const { refreshToken } = req.body;
 
-export { registerUser, loginUser,genAccessToken };
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token required" });
+  }
+
+  try {
+    // Find the user by refresh token
+    const user = await User.findOne({ refreshToken });
+
+    if (!user) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    // Clear the refresh token from the database
+    user.refreshToken = null;
+    await user.save();
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+export { registerUser, loginUser,genAccessToken,logout };
